@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-
+    "html/template" // New import
 	_ "github.com/go-sql-driver/mysql" // New import
-	"snippetbox.mcheng.net/cmd/web/internal/models"
+	"snippetbox.mcheng.net/internal/models"
 )
 
 // Define an application struct to hold the application-wide dependencies for the
@@ -17,6 +17,7 @@ import (
 type application struct{
     logger *slog.Logger
     snippets *models.SnippetModel
+    templateCache map[string]*template.Template
 }
 
 func main() {
@@ -44,11 +45,19 @@ func main() {
     defer db.Close()
 
 
+    // Initialize a new template cache...
+    templateCache, err := newTemplateCache()
+    if err != nil {
+        logger.Error(err.Error())
+        os.Exit(1)
+    }
+
     // Initialize a new instance of our application struct, containing the
     // dependencies (for now, just the structured logger)”
     app := &application{
         logger: logger, 
         snippets: &models.SnippetModel{DB: db},
+        templateCache: templateCache,
     }
 
 
